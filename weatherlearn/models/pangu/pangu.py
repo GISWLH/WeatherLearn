@@ -1,7 +1,10 @@
 import torch
 from torch import nn
 import numpy as np
-from timm.models.layers import trunc_normal_, DropPath
+try:
+    from timm.layers import trunc_normal_, DropPath
+except ImportError:  # timm < 0.9 / older layout
+    from timm.models.layers import trunc_normal_, DropPath
 
 from .utils.earth_position_index import get_earth_position_index
 from .utils.shift_window_mask import get_shift_window_mask, window_partition, window_reverse

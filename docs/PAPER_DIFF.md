@@ -58,7 +58,7 @@ Evidence: `pangu.py:224–227`, `366`, `485`；注释说明轴序。
 |--|--|
 | 修前 | `h_remainder = height % l_patch_size` |
 | 修后 | `h_remainder = height % h_patch_size` |
-| 影响 | 默认 `(2,4,4)` @ 721 碰巧结果相同；`h≠l` 的 patch 会 pad 错误甚至无法整除 |
+| 影响 | **潜伏**：默认 `(2,4,4)` @ 721 碰巧结果相同；`h≠l` 或其它高度时可能 pad 后无法被 `h_patch_size` 整除 |
 
 Evidence: `utils/patch_embed.py:75`；回归测试 `test_patch_embed3d_height_pad_uses_h_patch`。
 

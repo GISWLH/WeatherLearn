@@ -1,46 +1,46 @@
 ## Summary
 
-Packaging and test hygiene after a full-library audit of WeatherLearn (surgical diffs only; no OOP rewrite).
+Surgical fixes after packaging hygiene + paper alignment against **Pangu-Weather** (arXiv:2211.02556) and **FuXi** (arXiv:2306.12873). No OOP rewrite.
 
-- Make `pip install -e .` and `python -m unittest discover` work by adding missing package `__init__.py` files.
-- Relax `pyproject.toml` dependency pins to installable `>=` ranges (exact pins broke on Python 3.12/3.13).
-- Prefer `timm.layers` (with fallback) to silence the `timm.models.layers` deprecation.
+### Packaging / DX
+- Add missing package `__init__.py` so `pip install -e .` and `python -m unittest discover` work.
+- Relax `pyproject.toml` pins to installable `>=` ranges (exact pins broke on Python 3.12/3.13).
+- Prefer `timm.layers` with fallback for `timm.models.layers` deprecation.
 - Make FuXi `depth` configurable (default **48**, backward compatible).
-- Skip full `Pangu()` OOM-prone unit test unless `WEATHERLEARN_RUN_HEAVY=1`.
-- Document Issue #8 respectfully: last layer is **Linear patch FC + bilinear interpolate** (matches the FuXi paper); discussion had conflated the two steps. See `docs/fuxi_last_layer.md`.
+- Skip full `Pangu()` unless `WEATHERLEARN_RUN_HEAVY=1`.
+- Document Issue #8: last layer is **Linear patch FC + bilinear interpolate** (matches FuXi paper). See `docs/fuxi_last_layer.md`.
+
+### Paper alignment bugs
+1. **Pangu default `window_size` lat/lon swapped (real bug)**  
+   Paper: each window up to **Wpl×Wlat×Wlon = 2×12×6**.  
+   Official pseudocode uses `window_size=(2,6,12)` on tensors shaped `(pl, lon, lat)` (e.g. `(8,360,181)`).  
+   This repo stores **`(pl, lat, lon)`** and documents window as `[pl, lat, lon]`, but previously defaulted to `(2,6,12)`, i.e. **Wlat=6, Wlon=12** — physically swapped vs the paper. Earth-specific bias also treats the **last** window dim as cyclic longitude, so the swap is semantically wrong.  
+   **Fix:** default `(2,12,6)`; `shift_size = half window`.
+
+2. **`PatchEmbed3D` height pad used wrong modulus (real logic bug; latent on defaults)**  
+   Previously: `h_remainder = height % l_patch_size` while pad amount used `h_patch_size`.  
+   For stock Pangu `patch=(2,4,4)` @ height 721, `721%2` and `721%4` coincide, so **default shapes were unaffected**. Wrong when `l≠h` or other heights (can yield non-divisible padded height).  
+   **Fix:** `h_remainder = height % h_patch_size` (+ regression test). Please treat as a **latent correctness** fix, not a default-training breaker.
+
+### Not bugs / out of scope
+- FuXi Issue #8 last layer: **not** a bug (FC + bilinear 720→721 matches paper).
+- FuXi Short/Medium/Long cascade; Pangu 1h/3h/6h/24h hierarchical inference: system-level, undocumented here as intentional gaps.
+- Patch-embed GeLU: paper text vs official pseudocode disagree → left following official (no GeLU).
+
+Details: `docs/SPECS.md`, `docs/PAPER_DIFF.md`.
 
 ## Test plan
+- [x] `pip install -e .` (relaxed deps) + `from weatherlearn.models import Fuxi, Pangu, Pangu_lite`
+- [x] `python -m unittest discover -s tests -v` → **45 OK, 1 skipped** (heavy `test_pangu`)
+- [x] New checks: default window `(2,12,6)`; PatchEmbed3D height pad regression
+- [x] HF Space ZeroGPU smoke (`LonghaoWang/weatherlearn-fuxi-smoke`): FuXi+Pangu unit tests, lite + tiny721 forward OK
+- [ ] Optional: `WEATHERLEARN_RUN_HEAVY=1` full `Pangu()` on high-RAM GPU
 
-- [x] `pip install -e . --no-deps` (or with relaxed deps)
-- [x] `python -c "from weatherlearn.models import Fuxi, Pangu, Pangu_lite"`
-- [x] `python -m unittest discover -s tests -v` → 43 tests, 1 skipped (`test_pangu`), OK
-- [x] All FuXi tests pass, including new `test_depth_configurable`
-- [ ] Optional: `WEATHERLEARN_RUN_HEAVY=1 python -m unittest ... TestMain.test_pangu` on a high-RAM / GPU machine
-- [ ] Optional: HF Space buttons — lite / tiny721 smoke + FuXi unit tests
-
-## Notes for reviewers
-
-- License remains **BY-NC-SA 4.0**. No pretrained weight URLs added.
-- Larger items (ONNX finetune path cleanup, optional `cdsapi` extra, FengWu, full OOP refactor) intentionally deferred — catalogued in the accompanying audit notes.
-- Related discussion: Issue #8.
+## Notes
+- License remains **BY-NC-SA 4.0**. No invented pretrained weight URLs.
+- Related: Issue #8.
 
 ## 中文说明
-
-本 PR 为「完整复刻」审计后的最小修复：补齐包结构、放宽依赖钉死、FuXi `depth` 可配、重测试默认跳过，并补充 Issue #8（FC vs 插值）与论文一致的说明。不改动作者计划中的整体 OOP 重构。
-
-
-## Paper alignment (this follow-up)
-
-Branch `fix/paper-alignment` compares WeatherLearn to Pangu-Weather (arXiv:2211.02556) and FuXi (arXiv:2306.12873). Artifacts: `papers/SPECS.md`, `PAPER_DIFF.md`.
-
-### Bugs fixed (surgical)
-1. **Pangu window axis order** — paper `Wpl×Wlat×Wlon = 2×12×6`. Official pseudocode uses `(2,6,12)` on `(pl,lon,lat)`; this repo uses `(pl,lat,lon)`, so the default must be `(2,12,6)` (was `(2,6,12)`, lat/lon swapped). `shift_size` now derives as half-window.
-2. **`PatchEmbed3D` height padding** — remainder used `l_patch_size` instead of `h_patch_size` (harmless for default `(2,4,4)` @ 721; wrong when `h≠l`).
-
-### Not bugs / scope gaps
-- FuXi last layer (Issue #8): **FC + bilinear 720→721** matches paper — not reopened.
-- FuXi Short/Medium/Long **cascade** and Pangu **1h/3h/6h/24h** hierarchical inference: system-level, not implemented (documented intentional).
-- Patch-embed GeLU: paper text vs official pseudocode disagree → left as ambiguous (follow official: no GeLU).
-
-### Tests
-`python -m unittest discover -s tests -v` → **45 tests, 1 skipped** (`test_pangu` heavy), OK.
+- **Pangu window**：相对论文是实打实的轴序 bug（本仓库 `(pl,lat,lon)` 却沿用官方伪代码在 `(pl,lon,lat)` 下的 `(2,6,12)`）。
+- **PatchEmbed3D**：取模公式确实错，但对默认 `721×(2,4,4)` 潜伏；PR 按 latent correctness 表述，不夸大默认训练影响。
+- FuXi 末层与论文一致，不重开 Issue #8。

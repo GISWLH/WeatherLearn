@@ -119,6 +119,18 @@ def standardize_pair(x: torch.Tensor, y: torch.Tensor):
     return (x - mean) / std, (y - mean) / std
 
 
+def save_pair_cache(path: str, x: torch.Tensor, y: torch.Tensor, meta: dict) -> None:
+    import os
+    os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
+    torch.save({"x": x.cpu(), "y": y.cpu(), "meta": meta}, path)
+    print(f"cached={path} bytes={os.path.getsize(path)}")
+
+
+def load_pair_cache(path: str):
+    blob = torch.load(path, map_location="cpu", weights_only=False)
+    return blob["x"], blob["y"], blob["meta"]
+
+
 def run_train(
     steps: int = 2,
     lr: float = 1e-3,
@@ -127,6 +139,9 @@ def run_train(
     time_index: int = 1000,
     synthetic: bool = False,
     n_levels: int = 13,
+    cache_path: Optional[str] = None,
+    load_cache_only: bool = False,
+    prefetch_only: bool = False,
 ) -> int:
     from weatherlearn.models import FengWu_lite
 
@@ -138,17 +153,29 @@ def run_train(
     print(f"cuda_available={torch.cuda.is_available()}")
 
     try:
-        if synthetic:
+        if load_cache_only:
+            if not cache_path:
+                raise ValueError("load_cache_only requires cache_path")
+            print(f"loading cache={cache_path}")
+            x, y, meta = load_pair_cache(cache_path)
+        elif synthetic:
             x, y, meta = synthetic_pair(n_levels=n_levels)
         else:
             print(f"loading GCS uri={uri} time_index={time_index}")
             x, y, meta = load_arco_pair(uri=uri, time_index=time_index, n_levels=n_levels)
+            if cache_path:
+                save_pair_cache(cache_path, x, y, meta)
         print(f"meta={meta}")
     except Exception as exc:
         print("STATUS=FAIL")
         print(f"data_load_error={exc!r}")
         traceback.print_exc()
         return 1
+
+    if prefetch_only:
+        print("STATUS=OK")
+        print("prefetch_only=True")
+        return 0
 
     x, y = standardize_pair(x, y)
     lat, lon = x.shape[-2], x.shape[-1]

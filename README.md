@@ -1,3 +1,7 @@
+<!-- readme-visual-refresh:banner -->
+![WeatherLearn — hand-drawn project banner](assets/readme/banner.svg)
+<!-- /readme-visual-refresh:banner -->
+
 # WeatherLearn
 <div align="center">
 <img src="pic/logo.png" width="30%" height="30%">
@@ -112,3 +116,18 @@ by Lei Chen, Xiaohui Zhong, Feng Zhang, Yuan Cheng, Yinghui Xu, Yuan Qi, Hao Li
 - [ ] FengWu Model (https://arxiv.org/pdf/2304.02948v1.pdf)
 - [x] FuXi Model (https://arxiv.org/pdf/2306.12873v3.pdf)  
 - [ ] Set a separate window_size for longitude and latitude in the Fuxi model.
+
+<!-- readme-visual-refresh:artwork-source -->
+[Editable banner artwork · Excalidraw](assets/readme/banner.excalidraw)
+<!-- /readme-visual-refresh:artwork-source -->
+
+
+<!-- readme-visual-refresh:execution -->
+## Demonstration captured on EHPC · 17 October 2026
+
+![Fourteen original small patch-embedding and padding/cropping tests passed on CPU. The displayed patch projection uses synthetic inputs and random weights; full Pangu/Fuxi forecasts and trained checkpoints were not evaluated.](assets/readme/execution-result.png)
+
+Fourteen original small patch-embedding and padding/cropping tests passed on CPU. The displayed patch projection uses synthetic inputs and random weights; full Pangu/Fuxi forecasts and trained checkpoints were not evaluated.
+
+[Execution record and checksums](assets/readme/execution-record.json).
+<!-- /readme-visual-refresh:execution -->

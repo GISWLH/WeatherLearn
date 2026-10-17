@@ -1,0 +1,69 @@
+{
+  "repo": "GISWLH/WeatherLearn",
+  "environment": "EHPC PBS",
+  "execution_scope": "Fourteen original small patch-embedding and padding/cropping tests passed on CPU. The displayed patch projection uses synthetic inputs and random weights; full Pangu/Fuxi forecasts and trained checkpoints were not evaluated.",
+  "exit_code": 0,
+  "output": {
+    "path": "assets/readme/execution-result.png",
+    "sha256": "6408e5042dd39f8c4aeb4f0c3320b16dd4355287bdb5c88720df82f8038080ff"
+  },
+  "python": "3.11.9 (main, Apr 19 2024, 16:48:06) [GCC 11.2.0]",
+  "versions": {
+    "numpy": "1.26.4",
+    "pandas": "2.2.3",
+    "matplotlib": "3.9.4",
+    "scipy": "1.13.1",
+    "scikit-learn": "1.5.2",
+    "seaborn": "0.13.2",
+    "shap": "0.46.0",
+    "numba": "0.60.0",
+    "xgboost": "1.7.6",
+    "torch": "2.2.2+cpu",
+    "cartopy": "0.23.0",
+    "shapely": "2.0.6",
+    "pyproj": "3.6.1",
+    "requests": "2.32.4"
+  },
+  "started_at_utc": "2026-10-17T17:42:02.685897+00:00",
+  "finished_at_utc": "2026-10-17T17:42:04.862169+00:00",
+  "elapsed_seconds": 2.176270292024128,
+  "source_files": [
+    {
+      "path": "crop.py",
+      "sha256": "00b912d21cdba232bc56a858de56849dbf7f5b08ea9b64aa4318ed5d2b3a5cab",
+      "bytes": 1199
+    },
+    {
+      "path": "demo.py",
+      "sha256": "c17906151bf2af41d4f4434fc7f06cf0738557ec009e74cc61ea3e7309f20101",
+      "bytes": 2348
+    },
+    {
+      "path": "pad.py",
+      "sha256": "aecca509797c5226259e8e813b796598ad390df3ad98d98adf36251b6776cb56",
+      "bytes": 1624
+    },
+    {
+      "path": "patch_embed.py",
+      "sha256": "97ba2452f9d9e02290f77352cd0f4940d3a9a59d263ad77b4296d7f07a423de5",
+      "bytes": 4107
+    },
+    {
+      "path": "test_pad_crop.py",
+      "sha256": "79e07efc2475306e587dd201c06943451f30e6b52dfcc2a9ce77fe23e10b557b",
+      "bytes": 2134
+    },
+    {
+      "path": "test_patch_embed.py",
+      "sha256": "d1dd0eaf678c05adbe2eb30a77f4fd7b90ec9eefeca7c7e261490f7caa5ca080",
+      "bytes": 3328
+    }
+  ],
+  "input_files": [
+    {
+      "path": "input-manifest.json",
+      "sha256": "b86103e5e549ef21e980633562ceb64d3211c3e0ea2bd348088a920de50413de",
+      "bytes": 1423
+    }
+  ]
+}
